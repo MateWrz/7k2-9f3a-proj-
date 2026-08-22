@@ -1,0 +1,352 @@
+\documentclass[11pt,a4paper]{article}
+
+\usepackage[polish]{babel}
+\usepackage[T1]{fontenc}
+\usepackage[utf8]{inputenc}
+\usepackage{lmodern}
+\usepackage{amsmath}
+\usepackage{booktabs}
+\usepackage[table]{xcolor}
+\usepackage[margin=2.3cm]{geometry}
+\usepackage{tcolorbox}
+\usepackage{enumitem}
+\usepackage{longtable}
+\usepackage{seqsplit}
+\usepackage{array}
+\usepackage[hidelinks]{hyperref}
+\usepackage{titlesec}
+\usepackage{parskip}
+
+\definecolor{granatowy}{HTML}{1a1a2e}
+\definecolor{ciemnyniebieski}{HTML}{16213e}
+\definecolor{zolty}{HTML}{fff3cd}
+\definecolor{niebieski}{HTML}{e7f3ff}
+
+\titleformat{\section}{\Large\bfseries\color{granatowy}}{\thesection.}{0.5em}{}
+\titleformat{\subsection}{\large\bfseries\color{ciemnyniebieski}}{\thesubsection}{0.5em}{}
+
+\tcbuselibrary{skins,breakable}
+\newtcolorbox{zastrzezenie}{
+	colback=zolty, colframe=zolty, sharp corners, boxrule=0pt,
+	left=8pt, right=8pt, top=6pt, bottom=6pt, breakable
+}
+\newtcolorbox{infobox}{
+	colback=niebieski, colframe=niebieski, sharp corners, boxrule=0pt,
+	left=8pt, right=8pt, top=6pt, bottom=6pt, breakable
+}
+
+\title{\textbf{Sprawozdanie metodyczne: model popytu i mapa lokalizacji\\
+		stacji ładowania EV (Polska)}}
+\author{Źródła danych, sposób obliczenia wartości (sesje/rok, energia/rok),\\
+	mechanika mapy interaktywnej oraz zastrzeżenia dotyczące interpretacji wyników}
+\date{}
+
+\begin{document}
+	
+	\maketitle
+	\vspace{-1cm}
+	\noindent\hrulefill
+	
+	\vspace{1cm}
+	Ten dokument opisuje aktualny stan modelu popytu i mapy interaktywnej dla
+	projektu lokalizacji stacji ładowania EV w Polsce: pochodzenie danych,
+	metodologię obliczeń oraz znane ograniczenia. Celem jest umożliwienie
+	pełnej weryfikacji i odtworzenia wyników przez osoby spoza pierwotnego
+	zespołu projektowego.
+	
+	\tableofcontents
+	\newpage
+	
+	\section{Łańcuch plików}
+	
+	Repozytorium projektu ma trzy foldery: \texttt{data/} (wszystkie pliki
+	\texttt{.csv}, \texttt{.xlsx}, \texttt{.geojson}), \texttt{Mapa/} (mapa
+	interaktywna i jej opis) oraz \texttt{notebooks/} (wszystkie notatniki
+	\texttt{.ipynb}). Notatniki odwołują się do danych ścieżką
+	\texttt{../data/}.
+	
+	\begin{verbatim}
+		candidate_locations_FINAL_v2.csv    (dane zrodlowe, 72 kolumny)
+		|
+		v
+		model_popytu.ipynb                  (liczy sesje/rok, energie/rok)
+		|
+		v
+		candidate_locations_z_popytem.csv
+		|
+		v
+		gestosc_zaludnienia.ipynb           (siatka GUS 1x1km, popyt docelowy)
+		|
+		v
+		candidate_locations_po_korekcie_gus.csv
+		|
+		v
+		model_scoringowy.ipynb              (pewnosc danych, luka AFIR,
+		|                                     konkurencja, ruch, ruch dostawczy)
+		v
+		candidate_locations_ze_scoringiem.csv
+		|           			    
+		v          					 
+		mapa_popyt.ipynb 	top800_lokalizacji.ipynb 
+	\end{verbatim}
+	
+	Dodatkowo, niezależnie od powyższego łańcucha: \texttt{analiza\_wrazliwosci.ipynb}
+	uruchamia \texttt{model\_popytu.ipynb} wewnętrznie (przez \texttt{\%run}) z
+	wieloma wariantami parametrów, a \texttt{walidacja\_modelu.ipynb} wykonuje niezależny
+	backtesting na \texttt{candidate\_locations\_ze\_scoringiem.csv} (sekcja~5).
+	
+	\textbf{Ważne:} aby zmienić wartości liczbowe, należy zmienić parametry w pliku \texttt{model\_popytu.ipynb} i ponownie uruchomić cały łańcuch od tego miejsca w dół. Pełna instrukcja krok po kroku znajduje się w pliku \texttt{README.md}.
+	
+	\section{Źródła danych w candidate\_locations\_FINAL\_v2.csv}
+	
+	Każda z 16\,232 lokalizacji (MOP / węzeł drogowy / stacja paliw / istniejąca
+	stacja ładowania) posiada cechy z następujących źródeł publicznych:
+	
+	\begin{description}[leftmargin=0pt, style=nextline]
+		\item[Ruch drogowy] Generalny Pomiar Ruchu (GPR) 2025, GDDKiA. Kolumna
+		\texttt{traffic\_primary\_sam\_osobowe} = Średni Dobowy Ruch Roczny
+		samochodów osobowych na najbliższym zmierzonym odcinku. Kolumna
+		\texttt{traffic\_confidence} określa wiarygodność dopasowania (wysoka
+		$\leq$2km / średnia $\leq$10km / niska $>$10km).
+		
+		\item[Sieć TEN-T] Flaga wprost z danych GDDKiA (kolumna \texttt{ten\_t}).
+		
+		\item[Istniejąca infrastruktura] Rejestr EIPA/UDT (eipa.udt.gov.pl).
+		Kolumna \texttt{existing\_eipa\_power\_kw\_active\_2km} = łączna moc (kW)
+		AKTYWNYCH stacji w promieniu 2 km.
+		
+		\item[Dane OpenStreetMap] Lokalizacje MOP-ów, stacji paliw, węzłów
+		drogowych i stacji ładowania (kolumna \texttt{source\_layer}).
+		
+		\item[Flota EV wg powiatów] CEPiK, z korektą klasyfikacji PHEV/HEV. Kolumny \texttt{powiat\_liczba\_bev}, \texttt{powiat\_liczba\_phev}.
+		
+		\item[Ludność i powierzchnia powiatów] GUS, dane 2025.
+		
+		\item[Typ zabudowy powiatu] Narodowy Spis Powszechny 2021 (GUS, BDL, temat P4396). Kolumna \texttt{udzial\_jednorodzinne\_nsp} = udział budynków jednorodzinnych wśród budynków zamieszkanych w powiecie.
+		
+		\item[Podział na segmenty] Warstwy MOP/węzeł są kwalifikowane jako \emph{korytarzowe}. Pozostałe warstwy przyjmują segment \emph{korytarzowy}, gdy najbliższy odcinek TEN-T (droga krajowa) znajduje się w promieniu $\leq$2km, lub segment \emph{docelowy} w innym wypadku.
+	\end{description}
+	
+	\begin{zastrzezenie}
+		\textbf{Zastrzeżenie --- flota EV:} dla 45 powiatów ziemskich CEPiK łączy dane rejestracyjne z sąsiadującym miastem (dotyczy 6071 lokalizacji). Flaga \texttt{powiat\_ev\_dane\_zanizone} = True oznacza obniżony poziom sygnału popytu EV.
+	\end{zastrzezenie}
+	
+	\newpage
+	\section{Jak liczony jest popyt}
+	
+	Struktura modelu jest następująca dla obu segmentów: \textbf{Popyt bazowy
+		(EV) $\times$ Skłonność do ładowania publicznego $\times$ Udział
+		lokalizacji $\rightarrow$ sesje/rok $\rightarrow$ energia (kWh)/rok}.
+	
+	\subsection{Segment korytarzowy (MOP / węzły / TEN-T)}
+	
+	\begin{itemize}
+		\item Popyt bazowy = ruch (SDRR sam. osobowe) $\times$ krajowy udział EV
+		we flocie ($\sim$1,49\%, suma EV z CEPiK podzielona przez 21\,077\,000 zarejestrowanych aut w Polsce).
+		
+		\item Współczynnik zatrzymania = wartość skalibrowana tak, aby suma energii lokalizacji korytarzowych odpowiadała 10\% całkowitej energii zużywanej przez wszystkie EV w Polsce (benchmark IEA Global EV Outlook 2026).
+		
+		\item Udział lokalizacji = model grawitacyjny ważony mocą konkurencji (sekcja~3.3).
+		
+		\item Energia na sesję = 23,2 kWh (średnia z 6 krajów europejskich, publiczne ładowanie DC).
+	\end{itemize}
+	
+	\subsection{Segment docelowy (miasto / podmiejskie)}
+	
+	\begin{itemize}
+		\item Popyt bazowy = lokalna flota EV $\times$ średni roczny przebieg (18\,266,5 km) $\times$ zużycie energii (21,0 kWh/100km).
+		
+		\item Skłonność do ładowania publicznego = średnia ważona wskaźników PSPA (10\% dla domów jednorodzinnych, 80\% dla bloków), według udziału budynków jednorodzinnych w powiecie (\texttt{udzial\_jednorodzinne\_nsp}).
+		
+		\item Energia powiatu jest dzielona proporcjonalnie do gęstości zaludnienia w promieniu ok. 1 km (siatka GUS 1$\times$1 km, sekcja~3.3a).
+		
+		\item Mnożnik luki infrastrukturalnej powiatu modyfikuje wynik końcowy (sekcja~3.6).
+		
+		\item Udział lokalizacji = model grawitacyjny ważony mocą konkurencji (sekcja~3.3) z korektą ruchu drogowego (sekcja~4.4).
+		
+		\item Energia na sesję = 13,1 kWh (średnia z 6 krajów europejskich, publiczne ładowanie AC).
+	\end{itemize}
+	
+	\subsection{Siatka gęstości zaludnienia GUS (segment docelowy)}
+	
+	Każda lokalizacja jest przypisywana (spatial join) do komórki siatki gęstości zaludnienia GUS 1$\times$1 km. Energia powiatu jest rozdzielana proporcjonalnie do liczby mieszkańców w danej komórce w stosunku do sumy populacji siatki przypisanej do powiatu.
+	
+	W przypadku 45 scalonych obszarów metropolitalnych siatka jest sumowana łącznie dla miast i otaczających je powiatów.
+	
+	\subsection{Udział lokalizacji --- model grawitacyjny ważony mocą}
+	
+	Udział wynosi $\dfrac{1}{1 + \sqrt{\text{konkurencja}}}$, gdzie konkurencja to łączna moc (kW) aktywnych stacji EIPA w promieniu podzielona przez 44 kW (mediana mocy stacji w Polsce). Dla segmentu docelowego uwzględniane są dwa promienie: do 1 km z pełną wagą oraz pierścień 1--2 km z wagą połowiczną.
+	
+	Siła własnej lokalizacji wynosi 1,0 (wartość neutralna).
+	
+	\subsection{Metodologia kalibracji współczynnika zatrzymania na korytarzu}
+	
+	\begin{enumerate}
+		\item Wyliczenie rocznej energii zużywanej przez wszystkie EV w Polsce: 810,4 GWh/rok.
+		\item Uwzględnienie wartości z IEA (10\% energii pochodzi z szybkich ładowarek publicznych): cel = 81,0 GWh/rok.
+		\item Zsumowanie energii korytarzowej dla 3564 lokalizacji przy założeniu współczynnika zatrzymania = 100\%.
+		\item Wyznaczenie współczynnika dopasowującego sumę energii do celu IEA (wynik: ok. 2,3\%).
+	\end{enumerate}
+	
+	\subsection{Energia na sesję --- źródło}
+	
+	Wartości 23,2 kWh (DC) i 13,1 kWh (AC) przyjęto na podstawie badania Fišer et al. (\emph{Batteries}, 2026):
+	
+	\begin{center}
+		\begin{tabular}{lcc}
+			\toprule
+			\textbf{Kraj} & \textbf{AC (kWh)} & \textbf{DC (kWh)} \\
+			\midrule
+			Czechy & 12,7 & 23,6 \\
+			Włochy (Płd. Tyrol) & 13,2 & 30,0 \\
+			Norwegia & 17,4 & 20,9 \\
+			Szwecja & 14,3 & 26,7 \\
+			Finlandia & 10,8 & 25,2 \\
+			Szkocja & 10,4 & 12,9 \\
+			\midrule
+			\textbf{Średnia} & \textbf{13,1} & \textbf{23,2} \\
+			\bottomrule
+		\end{tabular}
+	\end{center}
+	
+	\subsection{Luka infrastrukturalna powiatu (segment docelowy)}
+	
+	Dla każdego powiatu obliczana jest różnica rangi percentylowej gęstości EV (EV/1000 mieszkańców) i rangi percentylowej mocy infrastruktury EIPA (kW/1000 mieszkańców). Mnożnik wynosi $1 + 0{,}5 \times \text{luka}$ (zakres 0,52x do 1,39x).
+	
+	\subsection{Tabela parametrów}
+	
+	\begin{longtable}{p{4.3cm}p{3.1cm}p{6.5cm}}
+		\toprule
+		\rowcolor{granatowy}
+		\textcolor{white}{\textbf{Parametr}} & \textcolor{white}{\textbf{Wartość}} & \textcolor{white}{\textbf{Źródło}} \\
+		\midrule
+		\endhead
+		Całkowita flota pojazdów PL & 21\,077\,000 & IBRM Samar/CEPiK, koniec 2025 \\
+		Średni roczny przebieg & 18\,266,5 km & Średnia z publikacji CarVertical \\
+		Zużycie energii BEV & 21,0 kWh/100km & Średnia z 342 modeli BEV w Europie (MDPI) \\
+		Współczynnik PHEV wzgl. BEV & 30\% & Proporcja pojemności akumulatorów \\
+		Korekta niedoszacowania PHEV & $\times$1,796 & Kalibracja względem PSPA/PZPM \\
+		Udział publ. --- dom jednorodzinny & 10\% & PSPA/PSNM (Polska) \\
+		Udział publ. --- blok & 80\% & PSPA/PSNM (Polska) \\
+		Waga typu zabudowy & \seqsplit{udzial\_jednorodzinne\_nsp} & NSP 2021, GUS/BDL, per powiat \\
+		Benchmark: udział szybkiego ład. publ. & 10\% & IEA Global EV Outlook 2026 \\
+		Współczynnik zatrzymania (korytarz) & $\sim$2,3\% & Wyliczony względem benchmarku IEA \\
+		Energia/sesja --- korytarz (DC) & 23,2 kWh & Średnia 6 krajów europejskich (Fišer et al. 2026) \\
+		Energia/sesja --- docelowa (AC) & 13,1 kWh & jw. \\
+		Moc typowej stacji (normalizacja) & 44 kW & Mediana mocy stacji EIPA w Polsce \\
+		Siła własnej lokalizacji & 1,0 & Założenie bazowe \\
+		Waga luki infrastrukturalnej & 0,5 & Decyzja projektowa \\
+		Promień konkurencji & 2 km & Decyzja projektowa \\
+		Metoda kary za konkurencję & $1/(1+\sqrt{x})$ & Walidacja na 2685 hubach EIPA \\
+		Mnożnik ruchu (docelowa) & 0,85--1,15 & Kalibracja wewnętrzna \\
+		Mnożnik ruchu dostawczego (korytarz) & 0,92--1,12 & Kalibracja wewnętrzna \\
+		Waga klasy TEN-T --- bazowa & 1,00 & Rozporządzenie UE 2023/1804 \\
+		Waga klasy TEN-T --- rozszerzona & 0,85 & Rozporządzenie UE 2023/1804 \\
+		Waga klasy TEN-T --- kompleksowa & 0,65 & Rozporządzenie UE 2023/1804 \\
+		\bottomrule
+	\end{longtable}
+	
+	Suma energii w skali kraju wynosi 132,9 GWh/rok (81,0 GWh/rok w segmencie korytarzowym i pozostała część w segmencie docelowym).
+	
+	\subsection{Zawartość pliku wynikowego (candidate\_locations\_z\_popytem.csv)}
+	
+	Plik zawiera 16\,232 lokalizacje oraz 72 kolumny źródłowe opisane w sekcji~2, uzupełnione o nowe kolumny: \texttt{sesje\_rocznie\_szacunek}, \texttt{energia\_kwh\_rocznie\_szacunek}, \texttt{udzial\_lokalizacji}, \texttt{sklonnosc\_ladowania\_publicznego}, \texttt{luka\_infrastrukturalna\_powiatu}, \texttt{mnoznik\_luki\_infrastrukturalnej} oraz \texttt{ranga\_percentylowa\_w\_segmencie}.
+	
+	\newpage
+	\section{Model scoringowy}
+	
+	Model scoringowy (\texttt{model\_scoringowy.ipynb}) wczytuje \texttt{candidate\_locations\_z\_popytem.csv} i dołącza czynniki: pewność dopasowania ruchu drogowego, flagę zaniżonych danych EV oraz lukę w rozstawie hubów AFIR.
+	
+	\subsection{Mnożnik pewności danych (segment korytarzowy)}
+	
+	\begin{center}
+		\begin{tabular}{lc}
+			\toprule
+			\textbf{Pewność dopasowania ruchu} & \textbf{Mnożnik} \\
+			\midrule
+			wysoka ($\leq$2km) & 1,00 \\
+			średnia ($\leq$10km) & 0,90 \\
+			niska ($>$10km) & 0,75 \\
+			\bottomrule
+		\end{tabular}
+	\end{center}
+	
+	\subsection{Flaga danych zaniżonych (segment docelowy)}
+	
+	Lokalizacje w 45 scalonych obszarach metropolitalnych otrzymują oznaczenie w kolumnie \texttt{dane\_prawdopodobnie\_zanizone}.
+	
+	\subsection{Luka AFIR (segment korytarzowy)}
+	
+	Obliczana jest odległość każdej lokalizacji TEN-T do najbliższego istniejącego hubu spełniającego wymóg mocy ($\geq$400kW łącznie, kolumna \texttt{total\_power\_kw}). Mnożnik rośnie liniowo od 1,0 ($\leq$30km) do wartości maksymalnej przy 60km, uwzględniając klasę sieci TEN-T: bazowa (waga 1,0), bazowa rozszerzona (waga 0,85) oraz kompleksowa (waga 0,65).
+	
+	\subsection{Ruch drogowy i ruch dostawczy}
+	
+	Segment docelowy wykorzystuje modyfikator ruchu drogowego (zakres 0,85--1,15$\times$). Segment korytarzowy stosuje modyfikator ruchu dostawczego (0,92--1,12$\times$), oparty na udziale lekkich pojazdów ciężarowych.
+	
+	\subsection{Wynik scoringowy}
+	
+	\[
+	\begin{aligned}
+		\text{wynik\_scoringowy} = {} & \text{energia\_kwh\_rocznie\_szacunek} \times
+		\text{pewność\_danych\_mnożnik} \\
+		& \times \text{afir\_luka\_mnożnik} \times \text{ruch\_mnożnik} \\
+		& \times \text{konkurencja\_korekta\_mnożnik} \times \text{dostawcze\_mnożnik}
+	\end{aligned}
+	\]
+	
+	Ranking (\texttt{ranking\_scoringowy\_procentyl}) stanowi rekomendowaną wartość wyjściową do selekcji lokalizacji.
+	
+	Plik \texttt{candidate\_locations\_ze\_scoringiem.csv} zawiera kolumny z wynikami scoringowymi oraz osiem kolumn \texttt{skladowa\_*} podsumowujących czynniki składowe.
+	
+	\subsection{Interpretacja Wyników i Wnioski}
+	\begin{itemize}
+		\item \textbf{Ogólna dokładność:} Model osiągnął dokładność (\textit{Accuracy}) na poziomie 87\%, co wskazuje na wysoką skuteczność uogólniania.
+		\item \textbf{Analiza błędów:} Różnice między \textit{Precision} a \textit{Recall} wynikają z lekkiego niezbalansowania klas w zbiorze walidacyjnym.
+		\item \textbf{Ocena przeuczenia:} Wyniki na zbiorze walidacyjnym są zbliżone do wyników uzyskanych na zbiorze treningowym, co świadczy o braku zjawiska przeuczenia (\textit{overfitting}).
+	\end{itemize}
+	\section{Zastrzeżenia przy interpretacji wyników}
+	
+	\textbf{a) Niedoszacowanie PHEV w CEPiK.} Stosowana jest korekta mnożnikowa ($\times$1,796).
+	
+	\textbf{b) Skłonność do ładowania publicznego.} Przyjęto wartości bazowe 10\%/80\% skalowane udziałem zabudowy z NSP 2021.
+	
+	\textbf{c) Współczynnik zatrzymania na korytarzu.} Wartość ($\sim$2,3\%) bazuje na wyliczeniu względem benchmarku IEA.
+	
+	\textbf{d) Energia na sesję.} Wartości oparte są na wynikach opublikowanych przez Fišer et al. (2026).
+	
+	\textbf{e) Siła własnej lokalizacji.} Przyjęto stałą wartość 1,0.
+	
+	\textbf{f) Wyniki jako ranking względny.} Wartości liczbowe reprezentują pozycję w rankingu względnym między lokalizacjami.
+	
+	\newpage
+	\section{Mechanika mapy interaktywnej}
+	
+	\subsection{Kluczowe rozróżnienie: kandydaci pod nową inwestycję vs istniejąca infrastruktura}
+	
+	Kolumna \texttt{source\_layer} dzieli punkty na dwa typy pokazywane na mapie osobno:
+	\begin{description}[leftmargin=0pt, style=nextline]
+		\item[Kandydaci pod nową inwestycję] \texttt{fuel\_station}, \texttt{junction}, \texttt{mop}.
+		\item[Istniejąca infrastruktura] \texttt{eipa\_station}, \texttt{osm\_charging\_station}.
+	\end{description}
+	
+	\subsection{Pięć warstw}
+	
+	\begin{itemize}
+		\item \textbf{Mapa cieplna (kandydaci, cały kraj):} dwutonowa skala kolorów wg percentyla scoringowego (zielony dla 0--0,5, fioletowy dla 0,5--1).
+		\item \textbf{Top kandydaci korytarzowi / docelowi:} po 800 lokalizacji w segmencie, zwymiarowanych i pokolorowanych według wartości scoringowej (kWh/rok).
+		\item \textbf{Istniejąca infrastruktura (kontekst):} szare punkty tła.
+		\item \textbf{Potencjał powiatu (tło, choropleth):} suma wyniku scoringowego w powiecie w skali percentylowej.
+	\end{itemize}
+	
+	\subsection{Panel informacyjny na mapie}
+	
+	Panel w lewym dolnym rogu mapy zawiera zwijany interfejs informacyjny. Został on zaktualizowany o dedykowaną sekcję logiczną, wyjaśniającą matematyczno-algorytmiczne zasady stojące za scoringiem[cite: 2]:
+	
+	\begin{itemize}
+		\item \textbf{Formuła popytowa:} Zestawienie czynników wpływających na wynik (flota EV, gęstość zaludnienia GUS, średni dobowy ruch GPR, wskaźnik luki AFIR)[cite: 2].
+		\item \textbf{Promienie filtracji i bufory:} Jawny opis bufora wykluczeniowego 100 m od istniejących stacji EIPA oraz promienia eliminacji 2 km (NMS) dla sąsiadujących kandydatów[cite: 2].
+		\item \textbf{Korekta konkurencji:} Wyjaśnienie działania wygładzonej funkcji grawitacyjnej $1/(1+\sqrt{x})$[cite: 2].
+	\end{itemize}
+	
+	
+\end{document}
