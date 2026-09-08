@@ -1,0 +1,326 @@
+\documentclass[11pt,a4paper]{article}
+
+\usepackage[polish]{babel}
+\usepackage[T1]{fontenc}
+\usepackage[utf8]{inputenc}
+\usepackage{lmodern}
+\usepackage{booktabs}
+\usepackage[table]{xcolor}
+\usepackage[margin=2.3cm]{geometry}
+\usepackage{tcolorbox}
+\usepackage{enumitem}
+\usepackage{longtable}
+\usepackage[hidelinks]{hyperref}
+\usepackage{titlesec}
+\usepackage{parskip}
+
+\definecolor{granatowy}{HTML}{1B365D}
+\definecolor{ciemnyniebieski}{HTML}{16213e}
+\definecolor{zolty}{HTML}{fff3cd}
+\definecolor{niebieski}{HTML}{e7f3ff}
+
+\titleformat{\section}{\Large\bfseries\color{granatowy}}{\thesection.}{0.5em}{}
+\titleformat{\subsection}{\large\bfseries\color{ciemnyniebieski}}{\thesubsection}{0.5em}{}
+
+\tcbuselibrary{skins,breakable}
+\newtcolorbox{zastrzezenie}{
+	colback=zolty, colframe=zolty, sharp corners, boxrule=0pt,
+	left=8pt, right=8pt, top=6pt, bottom=6pt, breakable
+}
+\newtcolorbox{infobox}{
+	colback=niebieski, colframe=niebieski, sharp corners, boxrule=0pt,
+	left=8pt, right=8pt, top=6pt, bottom=6pt, breakable
+}
+
+\title{\textbf{Przegląd rynku: ładowanie pojazdów elektrycznych}\\
+	\large Ceny, transakcje i mnożniki --- Polska i Europa}
+\author{Opracowanie na podstawie monitoringu cenników operatorów\\
+	oraz bazy transakcji M\&A i rund finansowania}
+\date{Stan na sierpień 2026}
+
+\begin{document}
+	\maketitle
+	\vspace{-0.8cm}
+	\noindent\hrulefill
+	\vspace{0.6cm}
+	
+	\section{Podsumowanie kluczowych wniosków}
+	
+	\begin{infobox}
+		\begin{enumerate}[leftmargin=1.3em, itemsep=4pt]
+			\item \textbf{Polski rynek rośnie szybko i strukturalnie} --- flota BEV wzrosła
+			o 46\% r/r (styczeń--kwiecień 2026), \emph{mimo braku rządowych dopłat}, co
+			sugeruje popyt napędzany rynkiem, nie subsydiami.
+			\item \textbf{Infrastruktura przesuwa się w stronę DC} --- udział szybkich
+			punktów wzrósł z 37\% (koniec 2025) do 49\% (czerwiec 2026); w I półroczu
+			2026 operatorzy uruchomili ponad 1000 nowych punktów DC.
+			\item \textbf{Ceny odchodzą od prostych stawek AC/DC} --- co najmniej czterech
+			z siedmiu monitorowanych operatorów stosuje cenniki dynamiczne lub
+			wielopoziomowe (pora dnia, sezon, próg mocy, kanał płatności).
+			\item \textbf{Finansowanie przechodzi z venture capital na dług
+				instytucjonalny} --- w latach 2025--2026 dominują green loans i facilities
+			od banków, nie rundy equity od funduszy VC.
+			\item \textbf{Kapitał instytucjonalny wszedł do Europy Środkowej} ---
+			finansowanie GreenWay (138 mln EUR) obejmujące Polskę, Słowację i Chorwację
+			to sygnał, że region przestał być postrzegany jako zbyt niedojrzały.
+			\item \textbf{Wyceny zależą od utylizacji, nie od liczby punktów} ---
+			benchmarki branżowe operują na EV/EBITDA (6--9x dla operatorów sieci),
+			a nie na mnożnikach per punkt czy per kW.
+		\end{enumerate}
+	\end{infobox}
+	
+	\section{Rynek polski --- skala i dynamika}
+	
+	\subsection{Flota pojazdów}
+	
+	Na koniec czerwca 2026 r.\ po polskich drogach jeździło \textbf{292\,472}
+	samochody osobowe z napędem elektrycznym: 142\,130 w pełni elektrycznych
+	(BEV) oraz 150\,342 hybryd plug-in (PHEV). Do tego dochodzi 13\,817
+	samochodów dostawczych i ciężarowych oraz 31\,180 motorowerów i motocykli.
+	
+	\begin{center}
+		\begin{tabular}{lrrr}
+			\toprule
+			\rowcolor{granatowy}
+			\textcolor{white}{\textbf{Moment}} & \textcolor{white}{\textbf{BEV osobowe}} &
+			\textcolor{white}{\textbf{Punkty ładowania}} & \textcolor{white}{\textbf{Udział DC}} \\
+			\midrule
+			Koniec 2025 & ok. 120 tys. & 11\,891 & 37\% \\
+			Styczeń 2026 & 125\,602 & 12\,311 & --- \\
+			Marzec 2026 & 131\,863 & 12\,543 & 48\% \\
+			Czerwiec 2026 & 142\,130 & 13\,201 & 49\% \\
+			\bottomrule
+		\end{tabular}
+	\end{center}
+	
+	\begin{zastrzezenie}
+		\textbf{Uwaga metodologiczna:} od stycznia 2026 r.\ PSNM/PZPM zmieniły sposób
+		klasyfikacji punktów AC/DC w stacjach wielozłączowych (przyjęto zasadę
+		nadrzędności punktu o wyższej mocy). Część skokowego wzrostu udziału DC
+		z 37\% na 48\% wynika więc ze \emph{zmiany metodologii}, nie wyłącznie
+		z realnej rozbudowy sieci. Porównania udziału DC przed i po styczniu 2026
+		r.\ należy traktować ostrożnie.
+	\end{zastrzezenie}
+	
+	\subsection{Wzrost bez wsparcia publicznego}
+	
+	Najbardziej znaczący sygnał z pierwszego półrocza 2026 r.: mimo
+	\textbf{nieprzyznania} 300 mln zł na dopłaty do pojazdów zeroemisyjnych,
+	rejestracje BEV w okresie styczeń--kwiecień wzrosły o \textbf{46\%} względem
+	analogicznego okresu 2025 r. Po okresie hossy napędzanej programem
+	,,NaszEauto'' rynek wrócił do tempa ok.\ 50\% wzrostu r/r --- czyli poziomu
+	obserwowanego przed uruchomieniem dopłat.
+	
+	Dla inwestora oznacza to, że popyt na infrastrukturę ładowania w Polsce
+	opiera się na strukturalnym trendzie rynkowym, a nie na jednorazowym
+	impulsie regulacyjnym.
+	
+	\section{Ceny --- co pokazuje monitoring cenników}
+	
+	\subsection{Rozpiętość stawek}
+	
+	Monitoring obejmuje siedmiu operatorów działających w Polsce (ORLEN Charge,
+	GreenWay, Budimex Mobility, NOXO, Tauron/eTAURON, Eleport, MOYA energia).
+	Rozpiętość stawek na rynku jest znaczna --- od ok.\ 1,29 zł/kWh (taryfa nocna
+	AC) do ponad 3,30 zł/kWh (DC u najdroższych operatorów).
+	
+	\subsection{Główny trend: odejście od prostego cennika AC/DC}
+	
+	Najważniejsza obserwacja z monitoringu nie dotyczy poziomu cen, lecz ich
+	\textbf{struktury}. Klasyczny model ,,jedna stawka AC, jedna stawka DC''
+	przestaje być standardem:
+	
+	\begin{itemize}[leftmargin=1.3em]
+		\item \textbf{Tauron} --- cennik dynamiczny powiązany z giełdowymi notowaniami
+		energii, publikowany z jednodniowym wyprzedzeniem, plus osobna oferta
+		abonamentowa z podziałem na strefę letnią i zimową oraz przedziały godzinowe
+		(od 0,29 zł/kWh w weekendy do 2,09 zł/kWh zimą na DC).
+		\item \textbf{MOYA energia} --- pięć progów mocy DC (60/120/180/400 kW),
+		osobna taryfa dzienna i nocna dla AC, dopłata 0,30 zł/kWh przy płatności
+		terminalem zamiast aplikacją.
+		\item \textbf{Eleport} --- trzy progi mocy DC z rosnącą stawką.
+		\item \textbf{GreenWay} --- trzy plany abonamentowe (0 / 29,99 / 79,99 zł
+		miesięcznie) z malejącą stawką za kWh.
+	\end{itemize}
+	
+	\begin{infobox}
+		\textbf{Konsekwencja praktyczna:} porównywanie operatorów pojedynczą liczbą
+		staje się coraz mniej miarodajne. Realna stawka zależy od pory dnia, mocy
+		konkretnej stacji, kanału płatności i posiadania abonamentu. Ma to też
+		bezpośrednie przełożenie na modelowanie przychodów z nowej lokalizacji ---
+		przyjęcie jednej, uśrednionej ceny za kWh coraz gorzej odzwierciedla
+		faktyczną strukturę rynku.
+	\end{infobox}
+	
+	\subsection{Rola rabatów i programów lojalnościowych}
+	
+	Operatorzy powiązani z sieciami stacji paliw (ORLEN, MOYA) integrują
+	ładowanie z istniejącymi programami lojalnościowymi, umożliwiając obniżenie
+	kosztu sesji nawet o 50\% przez punkty. To zaciera obraz cenowy jeszcze
+	bardziej --- efektywna cena płacona przez stałego klienta może istotnie
+	odbiegać od publikowanej stawki.
+	
+	\section{Transakcje --- gdzie płynie kapitał}
+	
+	\subsection{Skala aktywności}
+	
+	Baza obejmuje \textbf{27 pozycji}: 18 rund finansowania i 9 transakcji
+	M\&A/fuzji, z lat 2018--2026, w Niemczech, Holandii, Francji, Hiszpanii,
+	Norwegii, Portugalii, Wielkiej Brytanii i Polsce. Same rundy finansowania
+	z lat 2022--2026 opiewają na kwoty rzędu \textbf{4,7 mld EUR}.
+	
+	\subsection{Trend 1: od equity do długu}
+	
+	Rundy z lat 2021--2023 miały charakter kapitałowy (IONITY: 700 mln EUR
+	equity od GIP/BlackRock; Milence: 500 mln EUR od Daimler Truck, TRATON
+	i Volvo; Driveco: 250 mln EUR). Od 2024--2025 dominują natomiast
+	\textbf{instrumenty dłużne}: green loans, senior debt facilities,
+	convertible loans.
+	
+	Rekordowa transakcja --- \textbf{600 mln EUR green loan dla IONITY} (maj
+	2025), udzielony przez konsorcjum dziewięciu banków --- jest największym
+	finansowaniem w historii europejskiej branży ładowania.
+	
+	\begin{infobox}
+		\textbf{Co to oznacza:} banki i kredytodawcy instytucjonalni zaczęli
+		traktować infrastrukturę ładowania jako \emph{klasę aktywów
+			infrastrukturalnych}, a nie inwestycję wysokiego ryzyka. Dług wymaga
+		jednak przewidywalnych przepływów pieniężnych, co przesuwa uwagę
+		inwestorów z tempa rozbudowy sieci na \textbf{utylizację i jakość
+			lokalizacji}.
+	\end{infobox}
+	
+	\subsection{Trend 2: kapitał wchodzi do Europy Środkowej}
+	
+	Finansowanie \textbf{GreenWay} (138 mln EUR green debt, 2025--2026),
+	obejmujące Polskę, Słowację i Chorwację, jest sygnałem odmiennym od
+	pozostałych transakcji w bazie --- wszystkie pozostałe dotyczą Europy
+	Zachodniej lub Skandynawii. Oznacza to, że region CEE przestał być
+	postrzegany przez kredytodawców jako zbyt niedojrzały do finansowania
+	dłużnego.
+	
+	Dodatkowo \textbf{Powerdot} (Portugalia) wprost wymienia Polskę wśród
+	swoich rynków działania, co potwierdza zainteresowanie zagranicznych
+	operatorów polskim rynkiem.
+	
+	\subsection{Trend 3: konsolidacja przez koncerny paliwowe i energetyczne}
+	
+	Segment M\&A jest zdominowany przez przejęcia dokonywane przez duże
+	podmioty spoza branży:
+	
+	\begin{center}
+		\begin{tabular}{llr}
+			\toprule
+			\rowcolor{granatowy}
+			\textcolor{white}{\textbf{Nabywca}} & \textcolor{white}{\textbf{Cel}} & \textcolor{white}{\textbf{Kwota}} \\
+			\midrule
+			BP & Chargemaster (UK) & ok. 147 mln EUR \\
+			EDF + Legal \& General & Pod Point (53\%, UK) & ok. 125 mln EUR \\
+			Shell & ubitricity (DE/UK) & nieujawniona \\
+			Shell & Volta (USA) & ok. 155 mln EUR \\
+			TotalEnergies & Blue Charge (Singapur) & nieujawniona \\
+			Mer (Statkraft) & eeMobility (DE) & nieujawniona \\
+			Wallbox & ABL (DE) & 15 mln EUR \\
+			\bottomrule
+		\end{tabular}
+	\end{center}
+	
+	Motywacja jest dwojaka: wejście na nowy rynek geograficzny (TotalEnergies
+	w Singapurze, Mer w Niemczech) lub uzupełnienie oferty detalicznej
+	o ładowanie (BP, Shell, EDF).
+	
+	\subsection{Trend 4: korekta wycen po szczycie SPAC}
+	
+	Przejęcie \textbf{Volta przez Shell} (2023, ok.\ 170 mln USD) nastąpiło przy
+	wycenie niższej o ok.\ \textbf{95\%} względem szczytowej wyceny z debiutu
+	giełdowego przez SPAC w 2021 r. Notowane spółki branżowe (ChargePoint,
+	Blink, EVgo) handlowane są znacznie poniżej wycen z IPO. Rynek przeszedł
+	z fazy spekulacyjnej do fazy oceny fundamentalnej.
+	
+	\section{Mnożniki wyceny}
+	
+	\subsection{Czego branża nie publikuje}
+	
+	Przeszukano dostępne źródła pod kątem mnożników \textbf{EV/kW}
+	i \textbf{EV/punkt ładowania}. Takie wskaźniki \textbf{nie są publikowane}
+	jako zagregowane benchmarki branżowe, a dla poszczególnych transakcji
+	źródła zwykle ujawniają kwotę \emph{albo} wielkość sieci, rzadko oba
+	naraz i z tego samego momentu.
+	
+	Ma to logiczne uzasadnienie: kluczowym czynnikiem wyceny jest
+	\textbf{utylizacja}, a nie sama liczba czy moc zainstalowanych punktów.
+	Dwie sieci o identycznej liczbie ładowarek mogą mieć skrajnie różną
+	wartość, jeśli różnią się wykorzystaniem.
+	
+	\subsection{Co branża publikuje: EV/EBITDA}
+	
+	\begin{center}
+		\begin{tabular}{lc}
+			\toprule
+			\rowcolor{granatowy}
+			\textcolor{white}{\textbf{Profil biznesowy}} & \textcolor{white}{\textbf{Mnożnik EV/EBITDA}} \\
+			\midrule
+			Wykonawcy instalacji & 3,0--5,0x \\
+			Instalacja + serwis (regionalnie) & 4,0--6,0x \\
+			Operatorzy sieci (CPO) z istotną utylizacją & 6,0--9,0x \\
+			Sieci hubów DC & 7,0--10,0x \\
+			Platformy premium o dużej skali & 8,0--12,0x+ \\
+			\midrule
+			Rynek szwajcarski --- mnożniki transakcyjne & 6,5--9,5x \\
+			Rynek szwajcarski --- zakres statystyczny & 5,0--7,0x \\
+			\bottomrule
+		\end{tabular}
+	\end{center}
+	
+	Dwa niezależne źródła (CT Acquisitions, Valindex) podają zbieżne zakresy dla
+	operatorów sieci, co wzmacnia wiarygodność tych benchmarków. Różnica między
+	mnożnikami transakcyjnymi (6,5--9,5x) a zakresem statystycznym (5,0--7,0x)
+	w danych szwajcarskich wskazuje na \textbf{premię płaconą w realnych
+		transakcjach} względem wyceny księgowej.
+	
+	\begin{zastrzezenie}
+		\textbf{Ograniczenie mnożników EBITDA w tej branży:} znaczna część
+		operatorów --- w tym notowani na giełdzie (ChargePoint: EBITDA $-$75 mln USD)
+		--- nie generuje dodatniej EBITDA. Dla takich podmiotów mnożnik EV/EBITDA
+		jest nieprzydatny, a wyceny opierają się na przychodach, wartości aktywów
+		lub zdyskontowanych przepływach. To dodatkowo tłumaczy, dlaczego branża nie
+		wypracowała jednego, powszechnie stosowanego wskaźnika wyceny.
+	\end{zastrzezenie}
+	
+	\section{Wnioski dla projektu}
+	
+	\begin{enumerate}[leftmargin=1.3em, itemsep=5pt]
+		\item \textbf{Modelowanie przychodów wymaga uwzględnienia struktury taryf.}
+		Przyjęcie jednej, uśrednionej stawki za kWh coraz gorzej odzwierciedla rynek,
+		na którym dominują taryfy godzinowe, sezonowe i zależne od mocy.
+		
+		\item \textbf{Utylizacja jest kluczową zmienną wyceny.} Zarówno benchmarki
+		wyceny, jak i warunki stawiane przez kredytodawców wskazują, że to
+		wykorzystanie stacji --- nie ich liczba --- decyduje o wartości aktywa.
+		
+		\item \textbf{Finansowanie dłużne jest realnie dostępne dla dojrzałych
+			platform.} Skala transakcji z lat 2025--2026 pokazuje, że operator
+		z udokumentowaną utylizacją i jakością lokalizacji może liczyć na
+		finansowanie bankowe, nie tylko kapitał wysokiego ryzyka.
+		
+		\item \textbf{Polska jest w polu widzenia kapitału instytucjonalnego.}
+		Finansowanie GreenWay oraz obecność Powerdot potwierdzają, że rynek CEE
+		przeszedł próg wiarygodności dla inwestorów zagranicznych.
+		
+		\item \textbf{Wyceny wróciły do poziomów fundamentalnych.} Korekta po
+		szczycie SPAC (Volta: $-$95\% względem debiutu) oznacza, że obecne mnożniki
+		są bardziej realistyczną podstawą do rozmów transakcyjnych niż dane
+		z lat 2021--2022.
+	\end{enumerate}
+	
+	\vspace{0.5cm}
+	\noindent\hrulefill
+	
+	\vspace{0.3cm}
+	\small\textit{Źródła danych: pliki \texttt{Zestawienie\_Cennikow\_EV.xlsx}
+		(monitoring cenników, 7 operatorów) oraz \texttt{baza\_transakcji\_ev.xlsx}
+		(27 transakcji + benchmarki wyceny). Każda pozycja w obu plikach zawiera
+		link źródłowy i datę dostępu. Dane rynkowe: Licznik Elektromobilności
+		PSNM/PZPM (czerwiec 2026).}
+	
+\end{document}
